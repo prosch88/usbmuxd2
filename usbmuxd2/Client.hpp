@@ -45,6 +45,7 @@ private:
     uint32_t _connectTag;
     cinfo _info;
     std::mutex _wlock;
+    bool _isListeningForDesktopNotifications;
 
 #pragma mark inheritance function
     virtual void stopAction() noexcept override;
@@ -74,6 +75,10 @@ public:
     void deconstruct() noexcept;
 
     const cinfo &getClientInfo(){return _info;};
+
+    void registerForDesktopNotifications();
+    void runLoopBlocking();
+    void sendDesktopNotification(const char *title, const char *message);
 
 #pragma mark friends
     friend class ClientManager;

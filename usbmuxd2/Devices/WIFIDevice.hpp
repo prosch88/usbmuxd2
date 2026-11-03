@@ -40,7 +40,7 @@ public:
     virtual ~WIFIDevice() override;
 
     virtual void kill() noexcept override;
-    void deconstruct() noexcept;
+    void deconstruct() noexcept override;
     void startLoop();
     virtual void start_connect(uint16_t dport, std::shared_ptr<Client> cli) override;
 

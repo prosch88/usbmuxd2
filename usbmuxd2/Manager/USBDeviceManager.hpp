@@ -34,11 +34,13 @@
 #define VID_APPLE 0x5ac
 #define PID_RANGE_LOW 0x1290
 #define PID_RANGE_MAX 0x12af
+#define PID_KIS 0x1881
 
 #define NUM_RX_LOOPS 3
 
 class USBDevice_receiver;
 class USBDevice;
+class USBDeviceKIS;
 class USBDeviceManager : public DeviceManager{
     libusb_context *_ctx;
     libusb_hotplug_callback_handle _usb_hotplug_cb_handle;
@@ -72,7 +74,10 @@ public:
 #pragma mark friends
     friend USBDevice_receiver;
     friend USBDevice;
+    friend USBDeviceKIS;
     friend int usb_hotplug_cb(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) noexcept;
+    friend void usb_get_vendormode_callback(struct libusb_transfer *transfer) noexcept;
+    friend void usb_set_vendormode_callback(struct libusb_transfer *transfer) noexcept;
     friend void usb_get_langid_callback(struct libusb_transfer *transfer) noexcept;
     friend void usb_get_serial_callback(struct libusb_transfer *transfer) noexcept;
 };

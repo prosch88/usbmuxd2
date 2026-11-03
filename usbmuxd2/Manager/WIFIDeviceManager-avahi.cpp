@@ -6,7 +6,6 @@
 //  Created by tihmstar on 27.05.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
-
 #include <libgeneral/macros.h>
 
 #ifdef HAVE_WIFI_AVAHI

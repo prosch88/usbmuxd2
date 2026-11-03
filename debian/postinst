@@ -29,3 +29,4 @@ if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-decon
 fi
 # End automatically added section
 
+systemctl --global enable usbmuxd-notify.service

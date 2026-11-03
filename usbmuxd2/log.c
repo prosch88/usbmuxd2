@@ -5,10 +5,10 @@
 //  Created by tihmstar on 17.05.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
+#include <libgeneral/macros.h>
 
 #include "log.h"
 #include <stdarg.h>
-#include <libgeneral/macros.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

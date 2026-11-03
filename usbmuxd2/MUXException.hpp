@@ -17,6 +17,7 @@ EASY_BASE_EXCEPTION(MUXException);
 EASY_EXCEPTION(MUXException_client_disconnected,MUXException);
 EASY_EXCEPTION(MUXException_device_disconnected,MUXException);
 EASY_EXCEPTION(MUXException_graceful_kill,MUXException);
+EASY_EXCEPTION(MUXException_unsupported,MUXException);
 };
 
 #endif /* MUXException_hpp */

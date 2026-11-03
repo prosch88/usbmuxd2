@@ -4,6 +4,7 @@
 //
 //  Created by tihmstar on 20.07.23.
 //
+#include <libgeneral/macros.h>
 
 #include "Muxer.hpp"
 #include "Devices/USBDevice.hpp"
@@ -11,8 +12,6 @@
 #include "Manager/ClientManager.hpp"
 #include "Client.hpp"
 #include "sysconf/preflight.hpp"
-
-#include <libgeneral/macros.h>
 
 #ifdef HAVE_LIBIMOBILEDEVICE
 #   include "Devices/WIFIDevice.hpp"
@@ -51,9 +50,9 @@ Muxer::~Muxer(){
 }
 
 #pragma mark Managers
-void Muxer::spawnClientManager(){
+void Muxer::spawnClientManager(const char *exclusiveClientName){
     assure(!_climgr);
-    _climgr = new ClientManager(this);
+    _climgr = new ClientManager(this, exclusiveClientName);
     _climgr->startLoop();
 }
 void Muxer::spawnUSBDeviceManager(){
@@ -440,6 +439,19 @@ void Muxer::notify_alldevices(std::shared_ptr<Client> cli) noexcept {
             p_rsp = getDevicePlist(d);
             try {
                 cli->send_plist_pkt(0, p_rsp);
+            } catch (...) {
+                //we don't care if this fails
+            }
+        }
+    }
+}
+
+void Muxer::desktop_notification(const char *title, const char *body){
+    guardRead(_clientsGuard);
+    for (auto c : _clients){
+        if (c->_isListeningForDesktopNotifications) {
+            try {
+                c->sendDesktopNotification(title, body);
             } catch (...) {
                 //we don't care if this fails
             }

@@ -5,11 +5,11 @@
 //  Created by tihmstar on 17.08.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
+#include <libgeneral/macros.h>
 
 #include "Muxer.hpp"
 #include "sysconf/sysconf.hpp"
-
-#include <libgeneral/macros.h>
+#include "notification.h"
 
 #include <iostream>
 #include <future>
@@ -171,6 +171,7 @@ static void usage(){
 #ifdef WANT_SYSTEMD
     printf("  -s, --systemd\t\t\tRun in systemd operation mode (implies -z and -f).\n");
 #endif
+    printf("  -t, --tmplockdown\t\tUse a temporary directory for lockdown records (useful on macOS when SIP is enabled)\n");
     printf("  -U, --user USER\t\tChange to this user after startup (needs USB privileges).\n");
     printf("  -v, --verbose\t\t\tBe verbose (use twice or more to increase).\n");
     printf("  -V, --version\t\t\tPrint version information and exit.\n");
@@ -184,6 +185,9 @@ static void usage(){
     printf("      --allow-heartless-wifi\tAllow WIFI devices without heartbeat to be listed (needed for WIFI pairing)\n");
     printf("      --no-usb\t\t\tDo not start USBDeviceManager\n");
     printf("      --no-wifi\t\t\tDo not start WIFIDeviceManager\n");
+    printf("      --exclusive-client <name>\t\t\tDo not accept clients with processname other than <name>\n");
+    printf("\n");
+    printf("      --notification-daemon\tUserdaemon for showing desktop notifications\n");
     printf("\n");
 }
 
@@ -196,6 +200,7 @@ static void parse_opts(int argc, const char **argv){
 #ifdef WANT_SYSTEMD
         {"systemd",                 no_argument,        NULL, 's'},
 #endif
+        {"tmplockdown",             no_argument,        NULL, 't'},
         {"user",                    required_argument,  NULL, 'U'},
         {"verbose",                 no_argument,        NULL, 'v'},
         {"version",                 no_argument,        NULL, 'V'},
@@ -207,6 +212,8 @@ static void parse_opts(int argc, const char **argv){
         {"debug",                   no_argument,        NULL,  0 },
         {"no-usb",                  optional_argument,  NULL,  0 },
         {"no-wifi",                 optional_argument,  NULL,  0 },
+        {"exclusive-client",        required_argument,  NULL,  0 },
+        {"notification-daemon",     no_argument,        NULL,  0 },
         {NULL,                      0,                  NULL,  0 }
     };
     int optindex = 0;
@@ -216,7 +223,7 @@ static void parse_opts(int argc, const char **argv){
 #ifdef WANT_SYSTEMD
                             "s"
 #endif
-                            "U:vVxXz";
+                            "tU:vVxXz";
     
     
     while ((opt = getopt_long(argc, (char* const *)argv, opts_spec, longopts, &optindex)) >= 0) {
@@ -231,10 +238,16 @@ static void parse_opts(int argc, const char **argv){
                     gConfig->debugLevel++;
                 }else if (curopt == "no-usb") {
                     info("Manually disableing USBDeviceManager");
-                    gConfig->enableUSBDeviceManager = (!optarg) ? false : atoi(optarg);
+                    bool val = (!optarg) ? false : atoi(optarg);
+                    gConfig->setEnableUSBDeviceManager(val);
                 }else if (curopt == "no-wifi") {
                     info("Manually disabling WIFIDeviceManager");
-                    gConfig->enableWifiDeviceManager = (!optarg) ? false : atoi(optarg);
+                    bool val = (!optarg) ? false : atoi(optarg);
+                    gConfig->setEnableWifiDeviceManager(val);
+                }else if (curopt == "exclusive-client") {
+                    gConfig->exclusiveClient = optarg;
+                }else if (curopt == "notification-daemon") {
+                    exit(desktop_notification_dameon());
                 }
             }
                 break;
@@ -262,7 +275,7 @@ static void parse_opts(int argc, const char **argv){
                 }
                 break;
             case 'p':
-                gConfig->doPreflight = false;
+                gConfig->setDoPreflight(false);
                 break;
             case 'U':
                 gConfig->dropUser = optarg;
@@ -273,6 +286,10 @@ static void parse_opts(int argc, const char **argv){
                 gConfig->daemonize = false;
                 break;
 #endif
+            case 't':
+                gConfig->useTmpDir(true);
+                break;
+                
             case 'v':
                 ++verbose;
                 break;
@@ -297,22 +314,32 @@ static void parse_opts(int argc, const char **argv){
 }
 
 
-int main(int argc, const char * argv[]) {
+MAINFUNCTION
+int main_r(int argc, const char * argv[]) {
     int err = 0;
     int lfd = -1;
     struct flock lock = {};
     
     info("starting %s", VERSION_STRING);
+    
+    if (getuid() != 0) {
+#ifdef __APPLE__
+        error("This tool needs to be run as root on macOS!");
+        return -5;
+#endif
+        warning("This tool may not work correctly when running without root permissions!");
+    }
 
     gConfig = new Config();
+    
+    parse_opts(argc,argv);
+    
     try{
         gConfig->load();
     }catch(tihmstar::exception &e){
         fatal("Could not load config with error=%d (%s)",e.code(),e.what());
         creterror("failed to load config!");
     }
-
-    parse_opts(argc,argv);
 
     if (gConfig->debugLevel) {
         info("debuglevel set to %d",gConfig->debugLevel);
@@ -384,15 +411,16 @@ int main(int argc, const char * argv[]) {
         cretassure(write(lfd, pids, strlen(pids)) == strlen(pids), "Could not write pidfile!");
     }
 
-    if (!gConfig->doPreflight){
+    if (!gConfig->getDoPreflight()){
         info("Preflight disabled by config or commandline!");
     }
     
     //starting
-    mux = new Muxer(gConfig->doPreflight, gConfig->allowHeartlessWifi);
+    mux = new Muxer(gConfig->getDoPreflight(), gConfig->allowHeartlessWifi);
 
     try{
-        mux->spawnClientManager();
+        const char *exclusiveClient = gConfig->exclusiveClient.size() ? gConfig->exclusiveClient.c_str() : NULL;
+        mux->spawnClientManager(exclusiveClient);
         info("Inited ClientManager");
     }catch (tihmstar::exception &e){
         fatal("failed to spawnClientManager with error=%d (%s)",e.code(),e.what());
@@ -428,7 +456,7 @@ int main(int argc, const char * argv[]) {
         }
     }
 
-    if (gConfig->enableUSBDeviceManager){
+    if (gConfig->getEnableUSBDeviceManager()){
         try{
             mux->spawnUSBDeviceManager();
             info("Inited USBDeviceManager");
@@ -437,7 +465,7 @@ int main(int argc, const char * argv[]) {
         }
     }
 
-    if (gConfig->enableWifiDeviceManager){
+    if (gConfig->getEnableWifiDeviceManager()){
         try{
             mux->spawnWIFIDeviceManager();
             info("Inited WIFIDeviceManager");

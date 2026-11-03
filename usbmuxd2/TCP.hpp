@@ -41,6 +41,8 @@ class TCP : public tihmstar::Manager {
 
     char *_payloadBuf;
     struct pollfd _pfd;
+    
+    const int _TCP_MTU;
 
 #pragma mark private
     bool loopEvent() override;
@@ -57,9 +59,8 @@ class TCP : public tihmstar::Manager {
     
 public:
     static constexpr int bufsize = 0x80000;
-    static constexpr int TCP_MTU = (USB_MTU-sizeof(tcphdr)-sizeof(USBDevice::mux_header))&0xff00;
 
-    TCP(uint16_t sPort, uint16_t dPort, std::shared_ptr<USBDevice> dev, std::shared_ptr<Client> cli);
+    TCP(uint16_t sPort, uint16_t dPort, std::shared_ptr<USBDevice> dev, std::shared_ptr<Client> cli, int usb_mtu = 0);
     ~TCP();
 
 #pragma mark inheritance members

@@ -4,9 +4,9 @@
 //
 //  Created by tihmstar on 30.05.21.
 //
+#include <libgeneral/macros.h>
 
 #include "TCP.hpp"
-#include <libgeneral/macros.h>
 #include "Client.hpp"
 #include "Devices/USBDevice.hpp"
 #include <netinet/tcp.h>
@@ -17,9 +17,17 @@
 #define MIN(a,b) ((a) > (b) ? (b) : (a))
 #define unacked ((uint64_t)((_stx.seq >= _stx.seqAcked) ? (_stx.seq - _stx.seqAcked) : ((uint32_t)(0x100000000ULL + _stx.seq - _stx.seqAcked))))
 
-TCP::TCP(uint16_t sPort, uint16_t dPort, std::shared_ptr<USBDevice> dev, std::shared_ptr<Client> cli)
+#ifdef XCODE
+#define REPLICATE_TRAFFIC
+#endif
+
+#define TCP_MTU_DEFAULT(usb_mtu) (usb_mtu-sizeof(tcphdr)-sizeof(USBDevice::mux_header))
+
+
+TCP::TCP(uint16_t sPort, uint16_t dPort, std::shared_ptr<USBDevice> dev, std::shared_ptr<Client> cli, int usb_mtu)
 : _connState(CONN_CONNECTING), _stx{0,0,0,0,0,0x80000},
  _sPort(sPort), _dPort(dPort), _dev(dev), _cli(cli), _payloadBuf(NULL), _pfd{.fd = -1, .events=POLLIN}
+, _TCP_MTU(usb_mtu ? TCP_MTU_DEFAULT(usb_mtu) : TCP_MTU_DEFAULT(USB_MTU))
 {
     debug("[TCP] (%d) creating connection for sport=%u",cli->_fd,_sPort);
     assure(_payloadBuf = (char*)malloc(TCP::bufsize));
@@ -28,7 +36,9 @@ TCP::TCP(uint16_t sPort, uint16_t dPort, std::shared_ptr<USBDevice> dev, std::sh
 }
 
 TCP::~TCP(){
+#ifdef XCODE
     debug("destroying TCP %p",this);
+#endif
     stopLoop();
     safeFree(_payloadBuf);
     safeClose(_pfd.fd);
@@ -56,7 +66,7 @@ bool TCP::loopEvent(){
     retassure((err = poll(&_pfd,1,-1)) != -1, "[TCP CLIENT] poll failed");
     if (_pfd.revents & POLLHUP){
         remoteDidClose = true;
-        debug("[TCP CLIENT] Remote connection closed");
+        debug("[TCP CLIENT] [sport=%d dport=%d] Remote connection closed",_sPort, _dPort);
     }
     
     if ((_pfd.revents & (~(POLLIN | POLLHUP))) != 0){
@@ -75,10 +85,10 @@ bool TCP::loopEvent(){
         
         if (cnt == 0) break;
         
-        debug("[TCP CLIENT] got packet of size %zd",cnt);
+        debug("[TCP CLIENT] [sport=%d dport=%d] got packet of size %zd ",_sPort, _dPort,cnt);
 
         while (cnt>0) {
-            ssize_t doSend = MIN(cnt,TCP::TCP_MTU);
+            ssize_t doSend = MIN(cnt,_TCP_MTU);
             size_t didSend = send_data(bufstart,doSend);
             bufstart += didSend;
             cnt -= didSend;
@@ -218,7 +228,7 @@ retry:
     }
     len = rembytes > buflen ? buflen : rembytes;
 cnt_label:
-    if (len > TCP_MTU) len = TCP_MTU;
+    if (len > _TCP_MTU) len = _TCP_MTU;
     
     tcp_header.th_sport = htons(_sPort);
     tcp_header.th_dport = htons(_dPort);
@@ -252,7 +262,7 @@ void TCP::flush_data_nolock(){
     bufstart = _payloadBuf+lseqAck;
     buflen = (lseq >= lseqAck) ? lseq-lseqAck : (TCP::bufsize - lseqAck);
     
-    if (buflen > TCP_MTU) buflen = TCP_MTU;
+    if (buflen > _TCP_MTU) buflen = _TCP_MTU;
     if (!buflen) return;
 
     tcp_header.th_sport = htons(_sPort);
@@ -302,6 +312,8 @@ void TCP::deconstruct() noexcept{
 void TCP::handle_input(tcphdr* tcp_header, uint8_t* payload, uint32_t payload_len){
     uint32_t rSeq = 0;
     uint32_t rAck = 0;
+    
+
     {
         std::unique_lock<std::mutex> ul(_lockStx);
         debug("[TCP IN] sport=%u dport=%u seq=%u ack=%u flags=0x%x window=%u[%u] len=%u",
@@ -318,8 +330,9 @@ void TCP::handle_input(tcphdr* tcp_header, uint8_t* payload, uint32_t payload_le
                 _stx.ack = rSeq+1; //just copy this on first packet without parsing
                 _stx.inWin = ntohs(tcp_header->th_win) << 8;
                 _stx.pktForwarded = _stx.ack;
-                
+#ifndef REPLICATE_TRAFFIC
                 send_ack_nolock();
+#endif
                 _connState = CONN_CONNECTED;
                 _connStateDidChange.notifyAll();
             } else {

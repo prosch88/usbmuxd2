@@ -12,6 +12,7 @@
 
 class USBDevice;
 class USBDevice_receiver : public tihmstar::Manager{
+protected:
     USBDevice *_parent;
 
 private:
@@ -20,7 +21,7 @@ private:
 
 public:
     USBDevice_receiver(USBDevice *parent);
-    ~USBDevice_receiver();
+    virtual ~USBDevice_receiver();
 };
 
 

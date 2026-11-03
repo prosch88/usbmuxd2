@@ -59,7 +59,7 @@ PKG_CHECK_MODULES(libimobiledevice, $LIBIMOBILEDEVICE_REQUIRES_STR, have_limd=ye
 #Debian Dependencies
 LIBGENERAL_DEBIAN_DEP_STR="libgeneral0 (>= 0.$LIBGENERAL_MINVERS_STR),"
 LIBUSB_DEBIAN_DEP_STR="libusb-1.0-0 (>= 2:$LIBUSB_MINVERS_STR),"
-LIBPLIST_DEBIAN_DEP_STR="libplist4 (>= $LIBPLIST_MINVERS_STR),"
+LIBPLIST_DEBIAN_DEP_STR="libplist-2.0-4 (>= $LIBPLIST_MINVERS_STR),"
 AVAHI_DEBIAN_DEP_STR="avahi-client (>= $AVAHI_MINVERS_STR),"
 LIBIMOBILEDEVICE_DEBIAN_DEP_STR="libimobiledevice-1.0 (>= $LIBIMOBILEDEVICE_MINVERS_STR)"
 
@@ -155,6 +155,25 @@ AC_ARG_WITH([systemdsystemunitdir],
             [with_systemdsystemunitdir=$withval],
             [with_systemdsystemunitdir=auto])
 
+AC_ARG_WITH([systemduserunitdir],
+            [AS_HELP_STRING([--with-systemduserunitdir=DIR],
+            [directory for systemd user service files])],
+            [with_systemduserunitdir=$withval],
+            [with_systemduserunitdir=auto])
+
+
+if test "x$with_systemd" != xno; then
+  if test "x$with_systemduserunitdir" = "xauto"; then
+    systemduserunitdir=$($PKG_CONFIG --variable=systemduserunitdir systemd)
+    if test "x$systemduserunitdir" != "x"; then
+      with_systemduserunitdir="${systemduserunitdir}"
+    else
+      with_systemduserunitdir="/lib/systemd/user"
+    fi
+  fi
+  AC_SUBST([systemduserunitdir], [$with_systemduserunitdir])
+fi
+
 if test "x$with_systemd" != xno; then
   if test "x$with_systemdsystemunitdir" = "xauto"; then
     systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)
@@ -203,6 +222,7 @@ esac
 
 AM_CONDITIONAL(WANT_SYSTEMD, [test "x$activation_method" == "xsystemd" ])
 
+AC_CHECK_HEADERS([dlfcn.h])
 
 # Check if struct sockaddr has sa_len member
 AC_CHECK_MEMBER([struct sockaddr.sa_len],[
@@ -217,6 +237,9 @@ AC_SUBST([DEB_VERSION], [0.${VERSION_COMMIT_COUNT}-git-${VERSION_COMMIT_SHA}])
 if test "x${host_cpu}" == "xx86_64"; then
   AC_SUBST([DEB_ARCH], [amd64])
 fi
+
+# check for large file support
+AC_SYS_LARGEFILE
 
 AC_CONFIG_FILES([Makefile
                  udev/Makefile
@@ -245,6 +268,7 @@ fi
 
 if test "x$activation_method" = "xsystemd"; then
   echo "  systemd unit directory ..: ${systemdsystemunitdir}"
+  echo "  systemd user directory ..: ${systemduserunitdir}"
 fi
 
 if test -n "$udevrulesdir"; then

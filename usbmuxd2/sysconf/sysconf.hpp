@@ -21,22 +21,37 @@ std::string sysconf_udid_for_macaddr(std::string macaddr);
 void sysconf_fix_permissions(int uid, int gid);
 
 class Config{
+    uint32_t _flags;
+    bool _doPreflight;
+    bool _enableWifiDeviceManager;
+    bool _enableUSBDeviceManager;
+    
 public:
     //config
-    bool doPreflight;
     bool allowHeartlessWifi;
-    bool enableWifiDeviceManager;
-    bool enableUSBDeviceManager;
-
+    
     //commandline
     bool enableExit;
     bool daemonize;
     bool useLogfile;
     int debugLevel;
     std::string dropUser;
+    std::string exclusiveClient;
     
+public:
     Config();
     void load();
+    void useTmpDir(bool useTmpDir);
+    
+    //setters
+    void setDoPreflight(bool val);
+    void setEnableWifiDeviceManager(bool val);
+    void setEnableUSBDeviceManager(bool val);
+    
+    //getters
+    bool getDoPreflight();
+    bool getEnableWifiDeviceManager();
+    bool getEnableUSBDeviceManager();
 };
 
 #endif /* sysconf_hpp */

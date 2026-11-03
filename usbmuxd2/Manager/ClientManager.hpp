@@ -23,6 +23,8 @@ class ClientManager : public tihmstar::Manager{
     std::thread _cliReaperThread;
     tihmstar::DeliveryEvent<std::shared_ptr<Client>> _reapClients;
     
+    std::string _exclusiveClientName;
+    
     virtual void stopAction() noexcept override;
     virtual bool loopEvent() override;
     virtual void afterLoop() noexcept override;
@@ -30,11 +32,12 @@ class ClientManager : public tihmstar::Manager{
     void reaper_runloop();
 
     int accept_client();
-    void handle_client(int client_fd);    
+    bool shouldServeClient(int client_fd);
+    void handle_client(int client_fd);
 public:
-    ClientManager(Muxer *mux);
+    ClientManager(Muxer *mux, const char *exclusiveClientName = NULL);
     virtual ~ClientManager() override;
-
+    
     friend Client;
 };
 

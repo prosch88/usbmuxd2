@@ -4,11 +4,11 @@
 //
 //  Created by tihmstar on 08.11.23.
 //
+#include <libgeneral/macros.h>
 
 #include "sysconf.hpp"
 #include <sys/stat.h>
 #include <unistd.h>
-#include <libgeneral/macros.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <libgen.h>
@@ -29,21 +29,64 @@
 #   define BASE_CONFIG_DIR "/var/lib"
 #endif
 
+#define FLAG_HAVE_SETTING_PREFLIGHT     (1<<0)
+#define FLAG_HAVE_SETTING_WIFIMANAGER   (1<<1)
+#define FLAG_HAVE_SETTING_USBMANAGER    (1<<2)
+
+
+//HACK TO WORKAROUNG LIBPLIST API BREAK -_-
+extern "C" {
+static int (*my_plist_from_memory)(const char *plist_data, uint32_t length, plist_t *plist, void *format) = (int (*)(const char *plist_data, uint32_t length, plist_t *plist, void *format))plist_from_memory;
+}
+
 static std::map<std::string,std::string> gKnownMacAddrs;
 static std::mutex gKnownMacAddrsLck;
+static const char *gOverwriteConfigDir = NULL;
+static bool gDidCheckConfigEnv = false;
 
 const char *sysconf_get_config_dir(){
-    static bool didCheckConfigEnv = false;
-    static const char *overwriteConfigDir = NULL;
     
-    if (!didCheckConfigEnv){
-        overwriteConfigDir = getenv("USBMUXD_SYSCONF_DIR");
-        didCheckConfigEnv = true;
+    if (!gDidCheckConfigEnv){
+        gOverwriteConfigDir = getenv("USBMUXD_SYSCONF_DIR");
+        gDidCheckConfigEnv = true;
     }
     
-    if (overwriteConfigDir) return overwriteConfigDir;
+    if (gOverwriteConfigDir) return gOverwriteConfigDir;
     
-    return BASE_CONFIG_DIR "/" CONFIG_DIR;
+    const char * ret = BASE_CONFIG_DIR "/" CONFIG_DIR;
+
+    {
+        static bool haveTestedDirectory = false;
+        if (!haveTestedDirectory) {
+            int fd = -1;
+            cleanup([&]{
+                safeClose(fd);
+            });
+            haveTestedDirectory = true;
+            
+            fd = open(ret, O_DIRECTORY);
+            if (fd >= 0) {
+                debug("opening config dir '%s' OK",ret);
+            }else{
+                error("opening config dir '%s' FAIL. errno=%d (%s)",ret,errno,strerror(errno));
+                if (errno == EPERM) {
+#ifdef __APPLE__
+                    error("Got permission error while trying to open directory '%s'\n"
+                          "****************************************\n"
+                          "*  Failed to open lockdown directory!  *\n"
+                          "*  This directory is protected by SIP  *\n"
+                          "* Please disable SIP (not recommended) *\n"
+                          "*                  or                  *\n"
+                          "*   run usbmuxd2 with '-t' parameter   *\n"
+                          "****************************************\n"
+                          "",ret);
+#endif
+                }
+            }
+        }
+    }
+    
+    return ret;
 }
 
 static plist_t readPlist(const char *filePath){
@@ -64,7 +107,7 @@ static plist_t readPlist(const char *filePath){
     
     {
         plist_t pl = NULL;
-        plist_from_memory(fbuf, (uint32_t)finfo.st_size, &pl, NULL);
+        my_plist_from_memory(fbuf, (uint32_t)finfo.st_size, &pl, NULL);
         retassure(pl, "failed to parse plist at path '%s'",filePath);
         return pl;
     }
@@ -349,11 +392,12 @@ bool sysconf_try_getconfig_bool(std::string key, bool defaultValue){
 }
 
 Config::Config() :
+_flags(0),
 //config
-doPreflight(false),
+_doPreflight(false),
 allowHeartlessWifi(false),
-enableWifiDeviceManager(false),
-enableUSBDeviceManager(false),
+_enableWifiDeviceManager(false),
+_enableUSBDeviceManager(false),
 //commandline
 enableExit(false),
 daemonize(false),
@@ -365,8 +409,51 @@ debugLevel(0)
 
 void Config::load(){
     //config
-    doPreflight = sysconf_try_getconfig_bool("doPreflight",true);
-    enableWifiDeviceManager = sysconf_try_getconfig_bool("enableWifiDeviceManager",true);
-    enableUSBDeviceManager = sysconf_try_getconfig_bool("enableUSBDeviceManager",true);
+    if (!(_flags & FLAG_HAVE_SETTING_PREFLIGHT))    _doPreflight = sysconf_try_getconfig_bool("doPreflight",true);
+    if (!(_flags & FLAG_HAVE_SETTING_WIFIMANAGER))  _enableWifiDeviceManager = sysconf_try_getconfig_bool("enableWifiDeviceManager",true);
+    if (!(_flags & FLAG_HAVE_SETTING_USBMANAGER))   _enableUSBDeviceManager = sysconf_try_getconfig_bool("enableUSBDeviceManager",true);
+    
     info("Loaded config");
+}
+
+void Config::useTmpDir(bool useTmpDir){
+    if (useTmpDir) {
+        static char tmpDirPathBuf[0x200] = "/tmp/usbmuxd2/tmplockdown.XXXXXXXXXXXXXX";
+        mkdir_with_parents("/tmp/usbmuxd2/", 0700);
+        retassure(gOverwriteConfigDir = mkdtemp(tmpDirPathBuf), "Failed to create tmpdir with errno=%d (%s)",errno,strerror(errno));
+        setDoPreflight(false);
+        info("Using tmpdir for lockdown path");
+    }else{
+        gOverwriteConfigDir = NULL;
+    }
+    gDidCheckConfigEnv = true;
+}
+
+#pragma mark setters
+void Config::setDoPreflight(bool val){
+    _doPreflight = val;
+    _flags |= FLAG_HAVE_SETTING_PREFLIGHT;
+}
+
+void Config::setEnableWifiDeviceManager(bool val){
+    _enableWifiDeviceManager = val;
+    _flags |= FLAG_HAVE_SETTING_WIFIMANAGER;
+}
+
+void Config::setEnableUSBDeviceManager(bool val){
+    _enableUSBDeviceManager = val;
+    _flags |= FLAG_HAVE_SETTING_USBMANAGER;
+}
+
+#pragma mark getters
+bool Config::getDoPreflight(){
+    return _doPreflight;
+}
+
+bool Config::getEnableWifiDeviceManager(){
+    return _enableWifiDeviceManager;
+}
+
+bool Config::getEnableUSBDeviceManager(){
+    return _enableUSBDeviceManager;
 }

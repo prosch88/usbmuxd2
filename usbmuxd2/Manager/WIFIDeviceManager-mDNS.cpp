@@ -5,8 +5,6 @@
 //  Created by tihmstar on 26.09.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
-
-
 #include <libgeneral/macros.h>
 
 #ifdef HAVE_WIFI_MDNS

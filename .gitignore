@@ -41,6 +41,7 @@ Makefile
 build-usbmuxd2-*
 usbmuxd2/usbmuxd
 systemd/usbmuxd.service
+systemd/usbmuxd-notify.service
 udev/39-usbmuxd.rules
 config.h.in~
 Build/
@@ -52,3 +53,5 @@ cache_wrkdir
 *buildroot*
 *.deb
 *.control
+.DS_Store
+.vscode

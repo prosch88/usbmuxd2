@@ -10,14 +10,17 @@ usbmuxd_CXXFLAGS = $(AM_CXXFLAGS) $(AM_CFLAGS)
 usbmuxd_LDFLAGS = $(AM_LDFLAGS)
 usbmuxd_SOURCES = main.cpp \
 			log.c \
+			notification.cpp \
 			Client.cpp \
 			Muxer.cpp \
             MUXException.cpp \
 			TCP.cpp \
 			sysconf/sysconf.cpp \
 			sysconf/preflight.cpp \
+            external/libusb/descriptor.c \
 			Devices/Device.cpp \
 			Devices/USBDevice.cpp \
+			Devices/USBDeviceKIS.cpp \
 			Devices/USBDevice_receiver.cpp \
 			Devices/WIFIDevice.cpp \
 			Manager/USBDeviceManager.cpp \

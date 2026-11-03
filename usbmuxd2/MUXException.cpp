@@ -4,6 +4,7 @@
 //
 //  Created by tihmstar on 20.07.23.
 //
+#include <libgeneral/macros.h>
 
 #include "MUXException.hpp"
 

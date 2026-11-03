@@ -33,6 +33,7 @@ public:
 
 #pragma mark no-provider
     virtual void start_connect(uint16_t dport, std::shared_ptr<Client> cli) = 0;
+    virtual void deconstruct() noexcept = 0;
 
 #pragma mark provider
     virtual void kill() noexcept;

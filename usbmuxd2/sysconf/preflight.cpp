@@ -5,10 +5,10 @@
 //  Created by tihmstar on 18.08.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
+#include <libgeneral/macros.h>
 
 #include "preflight.hpp"
 
-#include <libgeneral/macros.h>
 #include "sysconf.hpp"
 #include <string.h>
 #include <stdio.h>
@@ -65,7 +65,9 @@ error:
         lockdownd_client_free(lockdown);
     if (cb_data) {
         std::thread delthread([](np_cb_data *cb_data){
+#ifdef XCODE
             debug("deleing pairing_callback cb_data(%p)",cb_data);
+#endif
             if (cb_data->np){ //this needs to be set!
                 np_set_notify_callback(cb_data->np, NULL, NULL); //join thread and make sure no more callbacks!
                 np_client_free(cb_data->np);

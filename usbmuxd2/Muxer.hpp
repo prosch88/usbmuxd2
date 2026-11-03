@@ -37,7 +37,7 @@ public:
     ~Muxer();
 
 #pragma mark Managers
-    void spawnClientManager();
+    void spawnClientManager(const char *exclusiveClientName = NULL);
     void spawnUSBDeviceManager();
     void spawnWIFIDeviceManager();
     bool hasDeviceManager() noexcept;
@@ -68,6 +68,8 @@ public:
     void notify_device_remove(int deviceID) noexcept;
     void notify_device_paired(int deviceID) noexcept;
     void notify_alldevices(std::shared_ptr<Client> cli) noexcept;
+
+    void desktop_notification(const char *title, const char *body);
 
 #pragma mark Static
     static plist_t getDevicePlist(std::shared_ptr<Device> dev) noexcept;

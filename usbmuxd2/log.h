@@ -16,17 +16,12 @@ extern "C"{
     
 #include <stdio.h>
     
+#define debug(a ...) usbmuxd_log(LL_DEBUG,a)
 #define notice(a ...) usbmuxd_log(LL_NOTICE,a)
 #define info(a ...) usbmuxd_log(LL_INFO,a)
 #define warning(a ...) usbmuxd_log(LL_WARNING,a)
 #define error(a ...) usbmuxd_log(LL_ERROR,a)
 #define fatal(a ...) usbmuxd_log(LL_FATAL,a)
-    
-#ifdef DEBUG
-#   define debug(a ...) usbmuxd_log(LL_DEBUG,a)
-#else
-#   define debug(a ...)
-#endif
     
     enum loglevel {
         LL_FATAL = 0,

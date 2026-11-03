@@ -5,7 +5,6 @@
 //  Created by tihmstar on 21.06.19.
 //  Copyright © 2019 tihmstar. All rights reserved.
 //
-
 #include <libgeneral/macros.h>
 
 #ifdef HAVE_LIBIMOBILEDEVICE

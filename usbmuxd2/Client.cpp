@@ -4,9 +4,9 @@
 //
 //  Created by tihmstar on 20.07.23.
 //
+#include <libgeneral/macros.h>
 
 #include "Client.hpp"
-#include <libgeneral/macros.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -14,13 +14,24 @@
 #include "Muxer.hpp"
 #include "MUXException.hpp"
 #include "sysconf/sysconf.hpp"
+#include "notification.h"
+
+
+#define USBMUXD2_MAGIC_STRING_REGISTER_FOR_DESKTOP_NOTIFICATIONS "USBMUXD2_REGISTER_FOR_DESKTOP_NOTIFICATIONS"
+#define USBMUXD2_MAGIC_STRING_DESKTOP_NOTIFICATION "USBMUXD2_DESKTOP_NOTIFICATION"
+
+//HACK TO WORKAROUNG LIBPLIST API BREAK -_-
+extern "C" {
+static int (*my_plist_from_memory)(const char *plist_data, uint32_t length, plist_t *plist, void *format) = (int (*)(const char *plist_data, uint32_t length, plist_t *plist, void *format))plist_from_memory;
+}
 
 #pragma mark Client
 Client::Client(Muxer *mux, ClientManager *parent, int fd, uint64_t number)
 : _selfref{}, _mux(mux), _parent(parent)
 , _fd(fd), _number(number), _recvbuffer(NULL), _recvBytesCnt(0)
-, _proto_version(0),
-_isListening(false), _info{}
+, _proto_version(0)
+, _isListening(false), _info{}
+,_isListeningForDesktopNotifications(false)
 {
     debug("[Client] initializing Client %d",_fd);
     const int bufsize = Client::bufsize;
@@ -45,7 +56,7 @@ _isListening(false), _info{}
 Client::~Client(){
     debug("[Client] destroying Client %d",_fd);
     stopLoop();
-    {
+    if (_parent){
         std::unique_lock<std::mutex> ul(_parent->_childrenLck);
         _parent->_children.erase(this);
         _parent->_childrenEvent.notifyAll();
@@ -62,7 +73,7 @@ void Client::stopAction() noexcept{
 }
 
 void Client::afterLoop() noexcept{
-    _mux->delete_client(_selfref.lock());
+    if (_mux) _mux->delete_client(_selfref.lock());
 }
 
 bool Client::loopEvent(){
@@ -178,6 +189,54 @@ void Client::processData(const usbmuxd_header *hdr){
 
             if (message == "Listen") {
                 goto PLIST_CLIENT_LISTEN_LOC;
+            } else if (message == USBMUXD2_MAGIC_STRING_REGISTER_FOR_DESKTOP_NOTIFICATIONS) {
+                send_result(hdr->tag, RESULT_OK);
+                debug("Client %d now listening for desktop notifications", _fd);
+                _isListeningForDesktopNotifications = true;
+                return;
+            } else if (message == USBMUXD2_MAGIC_STRING_DESKTOP_NOTIFICATION) {
+                std::string title;
+                std::string message;
+
+                try {
+                    plist_t p_str = NULL;
+                    const char *str = NULL;
+                    uint64_t str_len = 0;
+
+                    assure(p_str = plist_dict_get_item(p_recieved, "Title"));
+                    retassure(str = plist_get_string_ptr(p_str, &str_len), "Failed to get str ptr from Title");
+
+                    title = std::string(str,str_len);
+                } catch (tihmstar::exception &e) {
+                    error("Reading notification title failed!");
+                    send_result(hdr->tag, EINVAL);
+                    return;
+                }
+
+                try {
+                    plist_t p_str = NULL;
+                    const char *str = NULL;
+                    uint64_t str_len = 0;
+
+                    assure(p_str = plist_dict_get_item(p_recieved, "Message"));
+                    retassure(str = plist_get_string_ptr(p_str, &str_len), "Failed to get str ptr from Message");
+
+                    message = std::string(str,str_len);
+                } catch (tihmstar::exception &e) {
+                    //
+                }
+
+                notification_send(title.c_str(), message.c_str());
+                return;
+            } else if (message == "Result") {
+                plist_t p_intval = NULL;
+                uint64_t number = 0;
+                assure(p_intval = plist_dict_get_item(p_recieved, "Number"));
+                assure(plist_get_node_type(p_intval) == PLIST_UINT);
+
+                plist_get_uint_val(p_intval, &number);
+                retcustomassure(MUXException_unsupported, number == 0, "Got Result %d",number);
+                return;
             } else if (message == "Connect") {
 
                 // get device id
@@ -298,7 +357,7 @@ void Client::processData(const usbmuxd_header *hdr){
                     const char *pairRecord = NULL;
                     uint64_t pairRecord_len = 0;
                     retassure(pairRecord = plist_get_data_ptr(p_pairRecord, &pairRecord_len), "Failed to get data ptr for PairRecordData");
-                    plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord, NULL);
+                    my_plist_from_memory(pairRecord, (uint32_t)pairRecord_len, &p_parsedPairRecord, NULL);
                 }
                 retassure(p_parsedPairRecord, "Failed to plist-parse received PairRecordData");
 
@@ -449,4 +508,40 @@ void Client::deconstruct() noexcept{
     std::shared_ptr<Client> selfref = _selfref.lock();
     _mux->delete_client(selfref);
     stopLoop();
+}
+
+void Client::registerForDesktopNotifications(){
+    plist_t dict = NULL;
+    cleanup([&]{
+        safeFreeCustom(dict, plist_free);
+    });
+    dict = plist_new_dict();
+    plist_dict_set_item(dict, "MessageType", plist_new_string(USBMUXD2_MAGIC_STRING_REGISTER_FOR_DESKTOP_NOTIFICATIONS));
+    send_plist_pkt(1337, dict);
+}
+
+void Client::runLoopBlocking(){
+    try {
+        while (loopEvent()){
+            //
+        }        
+    }catch (tihmstar::MUXException_unsupported &e){
+        throw;
+    }catch (...){
+        //
+    }
+}
+
+void Client::sendDesktopNotification(const char *title, const char *message){
+    plist_t dict = NULL;
+    cleanup([&]{
+        safeFreeCustom(dict, plist_free);
+    });
+    dict = plist_new_dict();
+    plist_dict_set_item(dict, "MessageType", plist_new_string(USBMUXD2_MAGIC_STRING_DESKTOP_NOTIFICATION));
+    plist_dict_set_item(dict, "Title", plist_new_string(title));
+    if (message){
+        plist_dict_set_item(dict, "Message", plist_new_string(message));
+    }
+    send_plist_pkt(1337, dict);
 }

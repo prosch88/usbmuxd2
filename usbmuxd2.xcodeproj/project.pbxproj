@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A2B47FD2CF6FDCF00557977 /* USBDeviceKIS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B47FC2CF6FDCF00557977 /* USBDeviceKIS.cpp */; };
+		2A2B964F2CDA374100EEC022 /* libusb-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A2B964E2CDA374100EEC022 /* libusb-1.0.0.dylib */; };
+		2A2B96502CDA374100EEC022 /* libusb-1.0.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 2A2B964E2CDA374100EEC022 /* libusb-1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		2A2B966B2CEDF1E000EEC022 /* descriptor.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A2B966A2CEDF1E000EEC022 /* descriptor.c */; };
+		2AD71A4A2D0857430086A536 /* notification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2AD71A492D0857430086A536 /* notification.cpp */; };
 		872B0D702AFB790E0075B244 /* sysconf.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 872B0D6E2AFB790E0075B244 /* sysconf.cpp */; };
 		876F4FC42B05006B00331C46 /* log.c in Sources */ = {isa = PBXBuildFile; fileRef = 876F4FC32B05006B00331C46 /* log.c */; };
 		876F4FC62B05023C00331C46 /* libimobiledevice-1.0.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 876F4FC52B05023C00331C46 /* libimobiledevice-1.0.6.dylib */; };
@@ -24,8 +29,6 @@
 		87E046392A699F1D00355F7B /* libgeneral.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 87E046372A699F1D00355F7B /* libgeneral.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		87E0463C2A699F2700355F7B /* libplist-2.0.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87E0463B2A699F2700355F7B /* libplist-2.0.4.dylib */; };
 		87E0463D2A699F2700355F7B /* libplist-2.0.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 87E0463B2A699F2700355F7B /* libplist-2.0.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		87E0463F2A69A0B700355F7B /* libusb-1.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 87E0463E2A69A0B700355F7B /* libusb-1.0.0.dylib */; };
-		87E046402A69A0B700355F7B /* libusb-1.0.0.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 87E0463E2A69A0B700355F7B /* libusb-1.0.0.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		87E046452A69A9DB00355F7B /* Device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87E046432A69A9DB00355F7B /* Device.cpp */; };
 		87E046482A69A9E000355F7B /* USBDevice.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87E046462A69A9E000355F7B /* USBDevice.cpp */; };
 		87E0464B2A69B23000355F7B /* MUXException.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 87E046492A69B23000355F7B /* MUXException.cpp */; };
@@ -50,10 +53,10 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				87E046402A69A0B700355F7B /* libusb-1.0.0.dylib in Embed Libraries */,
 				87E0463D2A699F2700355F7B /* libplist-2.0.4.dylib in Embed Libraries */,
 				876F4FC72B05023C00331C46 /* libimobiledevice-1.0.6.dylib in Embed Libraries */,
 				87E046392A699F1D00355F7B /* libgeneral.0.dylib in Embed Libraries */,
+				2A2B96502CDA374100EEC022 /* libusb-1.0.0.dylib in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -61,6 +64,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		2A2B47FB2CF6FDCF00557977 /* USBDeviceKIS.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = USBDeviceKIS.hpp; sourceTree = "<group>"; };
+		2A2B47FC2CF6FDCF00557977 /* USBDeviceKIS.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = USBDeviceKIS.cpp; sourceTree = "<group>"; };
+		2A2B964E2CDA374100EEC022 /* libusb-1.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = "libusb-1.0.0.dylib"; path = "../../../../opt/homebrew/Cellar/libusb/1.0.29/lib/libusb-1.0.0.dylib"; sourceTree = "<group>"; };
+		2A2B96662CDCCB9000EEC022 /* kis.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kis.h; sourceTree = "<group>"; };
+		2A2B96692CEDF1E000EEC022 /* descriptor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = descriptor.h; sourceTree = "<group>"; };
+		2A2B966A2CEDF1E000EEC022 /* descriptor.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = descriptor.c; sourceTree = "<group>"; };
+		2A2B966C2CEDF27D00EEC022 /* libusbi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = libusbi.h; sourceTree = "<group>"; };
+		2AD71A482D0857430086A536 /* notification.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = notification.h; sourceTree = "<group>"; };
+		2AD71A492D0857430086A536 /* notification.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = notification.cpp; sourceTree = "<group>"; };
 		872B0D6E2AFB790E0075B244 /* sysconf.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = sysconf.cpp; sourceTree = "<group>"; };
 		872B0D6F2AFB790E0075B244 /* sysconf.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = sysconf.hpp; sourceTree = "<group>"; };
 		876F4FC22B05006B00331C46 /* log.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = log.h; sourceTree = "<group>"; };
@@ -107,16 +119,34 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				87E0463F2A69A0B700355F7B /* libusb-1.0.0.dylib in Frameworks */,
 				87E0463C2A699F2700355F7B /* libplist-2.0.4.dylib in Frameworks */,
 				876F4FC62B05023C00331C46 /* libimobiledevice-1.0.6.dylib in Frameworks */,
 				87E046382A699F1D00355F7B /* libgeneral.0.dylib in Frameworks */,
+				2A2B964F2CDA374100EEC022 /* libusb-1.0.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2A2B96672CEDF1CB00EEC022 /* external */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B96682CEDF1D300EEC022 /* libusb */,
+			);
+			path = external;
+			sourceTree = "<group>";
+		};
+		2A2B96682CEDF1D300EEC022 /* libusb */ = {
+			isa = PBXGroup;
+			children = (
+				2A2B966C2CEDF27D00EEC022 /* libusbi.h */,
+				2A2B96692CEDF1E000EEC022 /* descriptor.h */,
+				2A2B966A2CEDF1E000EEC022 /* descriptor.c */,
+			);
+			path = libusb;
+			sourceTree = "<group>";
+		};
 		872B0D6D2AFB78FA0075B244 /* sysconf */ = {
 			isa = PBXGroup;
 			children = (
@@ -153,11 +183,14 @@
 				87E046492A69B23000355F7B /* MUXException.cpp */,
 				876F4FC22B05006B00331C46 /* log.h */,
 				876F4FC32B05006B00331C46 /* log.c */,
+				2A2B96672CEDF1CB00EEC022 /* external */,
 				87E046422A69A9C700355F7B /* Devices */,
 				87E046412A69A9B500355F7B /* Manager */,
 				872B0D6D2AFB78FA0075B244 /* sysconf */,
 				87B0815A2A769CA100889BF1 /* TCP.hpp */,
 				87B081592A769CA100889BF1 /* TCP.cpp */,
+				2AD71A482D0857430086A536 /* notification.h */,
+				2AD71A492D0857430086A536 /* notification.cpp */,
 				87E046502A69D3F100355F7B /* Client.hpp */,
 				87E0464F2A69D3F100355F7B /* Client.cpp */,
 				87E046312A699CDD00355F7B /* Muxer.hpp */,
@@ -170,6 +203,7 @@
 		87E046362A699F1D00355F7B /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2A2B964E2CDA374100EEC022 /* libusb-1.0.0.dylib */,
 				876F4FC52B05023C00331C46 /* libimobiledevice-1.0.6.dylib */,
 				87E0463E2A69A0B700355F7B /* libusb-1.0.0.dylib */,
 				87E0463B2A699F2700355F7B /* libplist-2.0.4.dylib */,
@@ -198,12 +232,15 @@
 		87E046422A69A9C700355F7B /* Devices */ = {
 			isa = PBXGroup;
 			children = (
+				2A2B96662CDCCB9000EEC022 /* kis.h */,
 				87E046442A69A9DB00355F7B /* Device.hpp */,
 				87E046432A69A9DB00355F7B /* Device.cpp */,
 				87EED9052AACBADE00C0469F /* USBDevice_receiver.hpp */,
 				87EED9042AACBADE00C0469F /* USBDevice_receiver.cpp */,
 				87E046472A69A9E000355F7B /* USBDevice.hpp */,
 				87E046462A69A9E000355F7B /* USBDevice.cpp */,
+				2A2B47FB2CF6FDCF00557977 /* USBDeviceKIS.hpp */,
+				2A2B47FC2CF6FDCF00557977 /* USBDeviceKIS.cpp */,
 				87984BF62B060CFD00CC6645 /* WIFIDevice.hpp */,
 				87984BF52B060CFD00CC6645 /* WIFIDevice.cpp */,
 			);
@@ -272,12 +309,15 @@
 				872B0D702AFB790E0075B244 /* sysconf.cpp in Sources */,
 				87E046482A69A9E000355F7B /* USBDevice.cpp in Sources */,
 				87E046322A699CDD00355F7B /* Muxer.cpp in Sources */,
+				2A2B966B2CEDF1E000EEC022 /* descriptor.c in Sources */,
 				87984BF42B060CD300CC6645 /* WIFIDeviceManager-mDNS.cpp in Sources */,
+				2A2B47FD2CF6FDCF00557977 /* USBDeviceKIS.cpp in Sources */,
 				876F4FC42B05006B00331C46 /* log.c in Sources */,
 				87E046452A69A9DB00355F7B /* Device.cpp in Sources */,
 				87E046262A699B8F00355F7B /* main.cpp in Sources */,
 				87E0464E2A69D1DC00355F7B /* ClientManager.cpp in Sources */,
 				87B0815B2A769CA100889BF1 /* TCP.cpp in Sources */,
+				2AD71A4A2D0857430086A536 /* notification.cpp in Sources */,
 				87984BFA2B06509F00CC6645 /* WIFIDeviceManager-avahi.cpp in Sources */,
 				87E046352A699D7200355F7B /* USBDeviceManager.cpp in Sources */,
 				87E0464B2A69B23000355F7B /* MUXException.cpp in Sources */,
@@ -412,14 +452,15 @@
 					"CUSTOM_LOGGING=\"\\\"log.h\\\"\"",
 					HAVE_WIFI_MDNS,
 					HAVE_STRUCT_SOCKADDR_SIN__LEN,
+					HAVE_DLFCN_H,
 				);
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					"/opt/homebrew/Cellar/libusb/1.0.26/include/libusb-1.0",
+					"/opt/homebrew/Cellar/libusb/1.0.29/include/libusb-1.0",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
-					/opt/homebrew/Cellar/libusb/1.0.26/lib,
+					/opt/homebrew/Cellar/libusb/1.0.29/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -431,11 +472,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				HEADER_SEARCH_PATHS = (
 					/usr/local/include,
-					"/opt/homebrew/Cellar/libusb/1.0.26/include/libusb-1.0",
+					"/opt/homebrew/Cellar/libusb/1.0.29/include/libusb-1.0",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					/usr/local/lib,
-					/opt/homebrew/Cellar/libusb/1.0.26/lib,
+					/opt/homebrew/Cellar/libusb/1.0.29/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
