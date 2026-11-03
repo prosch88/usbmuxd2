@@ -18,8 +18,8 @@ AC_SUBST([VERSION_COMMIT_SHA], ["m4_esyscmd([git rev-parse HEAD | tr -d '\n'])"]
 
 
 # Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
+AC_PROG_CC([clang])
+AC_PROG_CXX([clang++])
 
 # Check for operating system
 AC_MSG_CHECKING([whether we need platform-specific build settings])
@@ -40,7 +40,7 @@ CXXFLAGS+=" -std=c++20"
 
 LIBGENERAL_MINVERS_STR="217"
 LIBUSB_MINVERS_STR="1.0.9"
-LIBPLIST_MINVERS_STR="2.2.0"
+LIBPLIST_MINVERS_STR="2.6.0"
 AVAHI_MINVERS_STR="0.7"
 LIBIMOBILEDEVICE_MINVERS_STR="1.3.0"
 
